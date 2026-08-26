@@ -48,7 +48,25 @@ endif()
 
 ament_auto_find_build_dependencies()
 
-set(SMARTMICRO_LIB_DIR "lib-linux-x86_64-gcc_9")
+# Automatically select the prebuilt SmartAccess library variant based on the
+# target architecture. Both variants ship in the SmartAccess release that is
+# unpacked by smart_extract.sh into smartmicro/.
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|armv8)")
+    set(SMARTMICRO_LIB_DIR "lib-linux-armv8-gcc_9")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)")
+    set(SMARTMICRO_LIB_DIR "lib-linux-x86_64-gcc_9")
+else()
+    message(FATAL_ERROR
+        "Unsupported target architecture '${CMAKE_SYSTEM_PROCESSOR}'. "
+        "Expected x86_64 or armv8/aarch64.")
+endif()
+message(STATUS "SmartAccess library directory: ${SMARTMICRO_LIB_DIR}")
+
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/smartmicro/${SMARTMICRO_LIB_DIR}")
+    message(FATAL_ERROR
+        "SmartAccess libraries not found at "
+        "'smartmicro/${SMARTMICRO_LIB_DIR}'. Run smart_extract.sh first.")
+endif()
 
 # specify the path to search for the libraries
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/smartmicro/${SMARTMICRO_LIB_DIR})

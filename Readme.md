@@ -1,7 +1,5 @@
 # ROS2 smartmicro radar driver
 
-[![Build and test](https://github.com/smartmicro/smartmicro_ros2_radars/actions/workflows/dockerbuild.yml/badge.svg)](https://github.com/smartmicro/smartmicro_ros2_radars/actions/workflows/dockerbuild.yml)
-
 ## Purpose / Use cases
 There is a need for a node that will interface with a smartmicro radar driver and publish the data
 acquired by the sensor through the ROS2 pipeline. This package implements such a node.
@@ -15,22 +13,6 @@ acquired by the sensor through the ROS2 pipeline. This package implements such a
 ```
 ros2 launch umrr_ros2_driver radar.launch.py
 ```
-
-## How to launch the rviz with recorder plugin
-From a separate terminal and after sourcing workspace
-```
-rviz2 -d smartmicro_ros2_radars/umrr_ros2_driver/config/rviz/smart_plugin.rviz
-```
-
-![Recorder](smart_rviz_plugin/config/images/smart_rviz_plugin.png "Rviz Outlook")
-
-## How to start the custom can message sender
-From smart_rviz_plugin folder
-```
-python custom_can_sender.py
-```
-
-![Sender](smart_rviz_plugin/config/images/can_sender.png "Custom CAN Sender")
 
 ## Prerequisites
 
@@ -98,7 +80,6 @@ pip install python-can
 The inputs are coming as network packages generated in either of the following two ways:
 - Through directly interfacing with the sensor
 - Through a provided pcap file
-- Through using the sensor simulators
 
 These inputs are processed through the Smart Access C++ API and trigger a callback. Every time this
 callback is triggered a new point cloud message is created and published.
@@ -271,56 +252,24 @@ The sensor services respond with certain value codes. The following is a lookup 
 7   |    Value out of minimal bounds
 8   |    Value out of maximal bounds
 
-## RVIZ plugins and custom CAN sender
-Custom plugins for rviz has been provided. This plugin provides logging of the target list, object list and their respective headers.
-It provides a command configurator plugin through which commands, status and mode reqeust could be send. It also provides a plugin for initiating a firmware download.
-A config file is available which adds this plugin to the rviz. Along with logging the data the plugin also gives the possibility to record
-the target/object list data, convert it into a csv format and save it.
-
-Separately, a python GUI is also provided with which it is possible to send custom CAN messages. 
-
-## Development
-The dockerfile can be used to build and test the ros driver.
-
-### Prerequisites
-
-- Docker version >= 20.10.14
-- Docker compose version >= 1.29.2
-
-## Building and Testing
+## Building
 Accept the agreement and get the smartaccess release
 ```bash
 ./smart_extract.sh
 ```
 
-Building docker container
+Build the driver with colcon from your ROS 2 workspace
 ```bash
-docker build . -t umrr-ros:latest
+colcon build --packages-up-to umrr_ros2_driver
 ```
 
-Building the driver with the docker container
-```bash
-docker run --rm -v`pwd`:/code umrr-ros colcon build --packages-skip smart_rviz_plugin
-```
+## Platform support (x86_64 / armv8)
+The Smart Access release downloaded by `smart_extract.sh` ships prebuilt
+libraries for both `x86_64` and `armv8`. The driver's
+[`CMakeLists.txt`](umrr_ros2_driver/CMakeLists.txt) automatically selects the
+correct variant based on the target architecture (`CMAKE_SYSTEM_PROCESSOR`), so
+no manual edits are required when building on an armv8 board.
 
-Running the unit and integration tests via the docker compose
-```bash
-docker-compose up
-```
-
-Getting the test coverage via the docker container
-```bash
-docker run --rm -v`pwd`:/code umrr-ros colcon test-result --all --verbose
-```
-
-Stop and remove docker containers and networks
-```bash
-docker-compose down
-```
-## ARMv8 Support
-The Smart Access release which will be downloaded using the script also offers platform support for armv8. In order to build the driver on an armv8 machine, the [`CMakeLists.txt`](umrr_ros2_driver/CMakeLists.txt) should be adopted.
-Instead of using the default `lib-linux-x86_64_gcc_9` the user should plugin the `lib-linux-armv8-gcc_9` for armv8.
- 
 ## Contribution
 This project is a joint effort between [smartmicro](https://www.smartmicro.com/) and [Apex.AI](https://www.apex.ai/). The initial version of the code was developed by Igor Bogoslavskyi of Apex.AI (@niosus) and was thereafter adapted and extended by smartmicro.
 
