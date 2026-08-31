@@ -961,18 +961,24 @@ private:
     std::shared_ptr<umrr_ros2_msgs::srv::FirmwareDownload::Response> result);
 
   ///
-  /// @brief Converts a timestamp from microseconds to seconds and nanoseconds.
+  /// @brief Produces a ROS message timestamp for published messages.
   ///
-  /// @param timestamp The input timestamp in microseconds as a `std::chrono::microseconds`.
+  /// The raw sensor timestamp (from the port header) is on the radar's own
+  /// clock, which does not correspond to ROS/system time. Stamping messages
+  /// with it makes them impossible to relate to the TF tree (e.g. RViz cannot
+  /// transform the point cloud into the `map` frame). We therefore stamp with
+  /// the current ROS time (respecting use_sim_time). The raw sensor timestamp
+  /// remains available in the custom port header messages (ts_measurement).
+  ///
+  /// @param timestamp Unused; kept so existing call sites are unchanged.
   /// @return A `std::pair` where:
   ///         - `first` is the number of seconds (`int32_t`).
   ///         - `second` is the number of nanoseconds (`uint32_t`).
   ///
-  inline std::pair<int32_t, uint32_t> convert_timestamp(std::chrono::microseconds timestamp)
+  inline std::pair<int32_t, uint32_t> convert_timestamp(std::chrono::microseconds /*timestamp*/)
   {
-    const auto sec = std::chrono::duration_cast<std::chrono::seconds>(timestamp);
-    const auto nanosec = std::chrono::duration_cast<std::chrono::nanoseconds>(timestamp - sec);
-    return {sec.count(), nanosec.count()};
+    const builtin_interfaces::msg::Time stamp = this->now();
+    return {stamp.sec, stamp.nanosec};
   }
 
   ///
